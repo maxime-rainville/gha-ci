@@ -39,6 +39,9 @@ on:
       js:
         type: boolean
         default: true
+      phpunit_preserve_vendor_test:
+        type: boolean
+        default: false
 
 jobs:
 
@@ -260,6 +263,8 @@ jobs:
       - name: Composer
         env:
           INPUTS_COMPOSER_REQUIRE_EXTRA: ${{ inputs.composer_require_extra }}
+          INPUTS_PHPUNIT_PRESERVE_VENDOR_TEST: ${{ inputs.phpunit_preserve_vendor_test }}
+          
           MATRIX_COMPOSER_REQUIRE_EXTRA: ${{ matrix.composer_require_extra }}
           PARENT_BRANCH: ${{ matrix.parent_branch }}
           # https://docs.github.com/en/actions/learn-github-actions/contexts#context-availability
@@ -485,7 +490,7 @@ jobs:
           # Some older silverstripe vendor modules may still have the phpunit5 setUp() signatures without :void which when loaded will throw fatal PHP errors.
           # We cannot simply get rid of the 'tests' folders because behat requires vendor/silverstripe/[framework|cms]/tests/behat/serve-bootstrap.php
           # Recipes are excluded because the unit tests they run are in the required modules, and there's an assumption they'll require a compatible minor branch of the module
-          if ! [[ $GITHUB_REPOSITORY =~ /(recipe|silverstripe-installer) ]]; then
+          if ! [[ !$INPUTS_PHPUNIT_PRESERVE_VENDOR_TEST] && [$GITHUB_REPOSITORY =~ /(recipe|silverstripe-installer) ]]; then
             echo "Repositiory is a not a recipe, removing unecessary vendor silverstripe unit tests"
             # Make an exception for 'ExtendTest.php' which is a misnamed TestOnly non-test class
             php -r '
